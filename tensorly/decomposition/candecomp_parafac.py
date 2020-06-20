@@ -6,6 +6,7 @@ from ..random import check_random_state
 from ..base import unfold
 from ..kruskal_tensor import (kruskal_to_tensor, KruskalTensor,
                               unfolding_dot_khatri_rao, kruskal_norm)
+from ..tenalg.proximal import soft_thresholding
 from ..tenalg import khatri_rao
 from collections.abc import Mapping
 
@@ -119,7 +120,7 @@ def parafac(tensor, rank, n_iter_max=100, init='svd', svd='numpy_svd',\
             verbose=0, return_errors=False,\
             non_negative=False,\
             sparsity = None,\
-            l2_reg = 0,  mask=None,\
+            l2_reg = 0,  soft_thresh=0, mask=None,\
             cvg_criterion = 'abs_rec_error'):
     """CANDECOMP/PARAFAC decomposition via alternating least squares (ALS)
     Computes a rank-`rank` decomposition of `tensor` [1]_ such that,
@@ -235,6 +236,9 @@ def parafac(tensor, rank, n_iter_max=100, init='svd', svd='numpy_svd',\
                                    tl.ones(tl.shape(weights), **tl.context(factors[0])),
                                    weights)
                 factor = factor/(tl.reshape(weights, (1, -1)))
+                
+            if soft_thresh > 0:
+                factor = soft_thresholding(factor, soft_thresh)
 
             factors[mode] = factor
 
